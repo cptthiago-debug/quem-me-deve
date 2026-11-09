@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-BR"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#1a56db">
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0f6b5c">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -9,51 +11,343 @@
 <meta name="apple-mobile-web-app-title" content="Quem Me Deve">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Quem Me Deve</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-body{font-family:system-ui,sans-serif;max-width:640px;margin:0 auto;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 16px max(16px,env(safe-area-inset-left));background:#f5f6f8;color:#1a1a1a}
-h1{font-size:22px}.tot{font-size:15px;color:#555;margin-bottom:12px}
-.c{background:#fff;border-radius:10px;padding:12px 14px;margin:10px 0;box-shadow:0 1px 3px #0002}
-.c b{font-size:17px}.f{font-size:20px;font-weight:700;color:#b3261e}.s{color:#666;font-size:13px}
-button{padding:6px 10px;border:0;border-radius:6px;background:#1a56db;color:#fff;cursor:pointer;margin:4px 4px 0 0}
-button.g{background:#777}input{padding:6px;border:1px solid #ccc;border-radius:6px;margin:2px}
-.p{font-size:13px;color:#2a7;margin-top:4px}
-</style></head><body>
-<h1>Quem Me Deve</h1><div class="tot" id="tot"></div><div id="l"></div>
-<div class="c"><b>Novo devedor</b><br>
-<input id="n" placeholder="Nome"><input id="i" placeholder="Item"><input id="v" placeholder="Falta (R$)" size="10">
-<button onclick="add()">Adicionar</button></div>
-<div class="c"><button class="g" onclick="lnk()">Gerar link com dados</button>
-<div class="s" id="lk" style="word-break:break-all"></div></div>
-<script>
-const K='quem-me-deve';let D=[];
-const brl=v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-const hoje=()=>new Date().toLocaleDateString('pt-BR');
-const sv=()=>localStorage.setItem(K,JSON.stringify(D));
-(function(){
- const m=location.hash.match(/^#d=(.+)$/);
- if(m){try{const j=JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/')))));
-  if(!localStorage.getItem(K)||confirm('Substituir os dados deste aparelho pelos do link?')){D=j;sv();}}catch(e){alert('Link inválido')}
-  history.replaceState(null,'',location.pathname);}
- else{try{D=JSON.parse(localStorage.getItem(K)||'[]')}catch(e){D=[]}}
-})();
-function r(){
- document.getElementById('tot').textContent='Total a receber: '+brl(D.reduce((a,x)=>a+x.falta,0));
- document.getElementById('l').innerHTML=D.map((x,k)=>`<div class="c"><b>${esc(x.nome)}</b> <span class="s">· ${esc(x.item)}</span>
- <div class="f">${brl(x.falta)}</div>
- ${x.pag.map(p=>`<div class="p">✓ ${p.data}${p.valor?' · '+brl(p.valor):''}</div>`).join('')}
- <button onclick="pay(${k})">Registrar pagamento</button><button class="g" onclick="del(${k})">Excluir</button></div>`).join('')||'<div class="s">Nenhum devedor.</div>';
+:root {
+  /* layout: resumo no topo, depois um cartão por devedor com barra de progresso */
+  --bg: #f3f5f4;
+  --surface: #ffffff;
+  --ink: #17231f;
+  --muted: #5d6b66;
+  --line: #dde3e0;
+  --accent: #0f6b5c;
+  --accent-ink: #ffffff;
+  --good: #1d7a43;
+  --good-bg: #e3f3ea;
+  --warn: #9a5b00;
+  --warn-bg: #fbeed5;
+  --font-display: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
-const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const num=s=>parseFloat(String(s).replace(/\./g,'').replace(',','.'));
-function pay(k){const s=prompt('Valor pago (R$), vazio = só marcar a parcela:');if(s===null)return;
- const v=s.trim()?num(s):0;if(s.trim()&&isNaN(v))return alert('Valor inválido');
- D[k].pag.push({data:hoje(),valor:v||null});D[k].falta=Math.max(0,+(D[k].falta-v).toFixed(2));sv();r();}
-function del(k){if(confirm('Excluir '+D[k].nome+'?')){D.splice(k,1);sv();r();}}
-function add(){const n=document.getElementById('n').value.trim(),i=document.getElementById('i').value.trim(),v=num(document.getElementById('v').value);
- if(!n||isNaN(v))return alert('Preencha nome e valor');D.push({nome:n,item:i,falta:v,pag:[]});sv();r();
- ['n','i','v'].forEach(x=>document.getElementById(x).value='');}
-function lnk(){const b=btoa(unescape(encodeURIComponent(JSON.stringify(D)))).replace(/\+/g,'-').replace(/\//g,'_');
- document.getElementById('lk').textContent=location.origin+location.pathname+'#d='+b;}
-r();
-if("serviceWorker" in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register("sw.js").catch(()=>{});
-</script></body></html>
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1715; --surface: #17211e; --ink: #e8efec; --muted: #9bada6; --line: #2a3733;
+    --accent: #4cc0a8; --accent-ink: #08201a;
+    --good: #6fd197; --good-bg: #153424; --warn: #f0b860; --warn-bg: #3a2c10;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1715; --surface: #17211e; --ink: #e8efec; --muted: #9bada6; --line: #2a3733;
+  --accent: #4cc0a8; --accent-ink: #08201a;
+  --good: #6fd197; --good-bg: #153424; --warn: #f0b860; --warn-bg: #3a2c10;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.45; }
+main { max-width: 760px; margin: 0 auto; padding: max(24px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 64px max(16px, env(safe-area-inset-left)); display: flex; flex-direction: column; gap: 20px; }
+h1 { font-family: var(--font-display); font-size: 30px; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--font-display); font-size: 20px; margin: 0; }
+.sub { color: var(--muted); margin: 4px 0 0; font-size: 14px; }
+.num { font-variant-numeric: tabular-nums; }
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.tile .label { font-size: 13px; color: var(--muted); }
+.tile .value { font-family: var(--font-display); font-size: 26px; font-weight: 700; margin-top: 2px; }
+.tile.main { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.tile.main .label { color: var(--accent-ink); opacity: .85; }
+.cards { display: flex; flex-direction: column; gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.desc { color: var(--muted); font-size: 14px; }
+.chip { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 99px; white-space: nowrap; }
+.chip.ok { background: var(--good-bg); color: var(--good); }
+.chip.pend { background: var(--warn-bg); color: var(--warn); }
+.chip.done { background: var(--good-bg); color: var(--good); }
+.bar { height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.bar > div { height: 100%; background: var(--accent); border-radius: 99px; }
+.figures { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 14px; }
+.figures b { font-size: 18px; font-family: var(--font-display); }
+.figures .col { display: flex; flex-direction: column; }
+.figures .col.right { text-align: right; }
+details summary { cursor: pointer; font-size: 14px; color: var(--accent); font-weight: 600; padding: 4px 0; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--muted); font-weight: 500; font-size: 12px; }
+td.r, th.r { text-align: right; }
+.est { color: var(--muted); font-size: 12px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; }
+button { font: inherit; font-weight: 600; font-size: 14px; border-radius: 8px; padding: 9px 14px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+button.ghost { background: transparent; color: var(--accent); }
+button.danger { background: transparent; color: var(--warn); border-color: var(--warn); }
+button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+button[disabled] { opacity: .5; cursor: default; }
+form.pay { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; border-top: 1px solid var(--line); padding-top: 12px; }
+form.pay label { display: flex; flex-direction: column; font-size: 12px; color: var(--muted); gap: 3px; }
+form.pay input { font: inherit; font-size: 15px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); width: 140px; }
+.msg { color: var(--muted); padding: 24px 0; text-align: center; }
+.foot { color: var(--muted); font-size: 12px; }
+form.pay.wide input { width: 150px; }
+form.pay.wide input.txt { width: 180px; }
+#novo { display: flex; flex-direction: column; gap: 10px; }
+#novo form.pay { border-top: 0; padding-top: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+@media (prefers-reduced-motion: no-preference) { .bar > div { transition: width .4s ease; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Quem Me Deve</h1>
+    <p class="sub" id="hoje"></p>
+  </header>
+  <section class="summary" id="summary" aria-label="Resumo"></section>
+  <section id="novo" aria-label="Nova dívida"></section>
+  <section class="cards" id="cards" aria-label="Devedores"><p class="msg" id="status">Carregando…</p></section>
+  <section class="card" id="bk" aria-label="Backup">
+    <h2>Backup</h2>
+    <p class="desc">Os dados ficam salvos só neste celular, neste navegador. Baixe um backup de vez em quando.</p>
+    <div class="actions">
+      <button type="button" id="bk-down">Baixar backup</button>
+      <button type="button" class="ghost" id="bk-copy">Copiar backup</button>
+      <label class="ghost" style="display:inline-block;border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:9px 14px;font-weight:600;font-size:14px;cursor:pointer">Restaurar<input type="file" id="bk-file" accept=".json,application/json" style="display:none"></label>
+    </div>
+    <p class="desc" id="bkmsg" role="status"></p>
+  </section>
+</main>
+<script>
+(function () {
+  var MESES = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+  var brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+  var now = new Date();
+  var mesAtual = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+  var hojeISO = mesAtual + "-" + String(now.getDate()).padStart(2, "0");
+  document.getElementById("hoje").textContent = "Hoje é " + hojeISO.split("-").reverse().join("/");
+
+
+  var KEY = "quem-me-deve-v1";
+  var SEED = {"debts":{},"pagamentos":{}};
+  var store;
+  try { store = JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) { store = null; }
+  var hadSaved = false;
+  try { hadSaved = localStorage.getItem(KEY) !== null; } catch (e) {}
+  if (!store || !store.debts || !store.pagamentos) store = JSON.parse(JSON.stringify(SEED));
+  (function () {
+    var h = location.hash || "";
+    if (h.indexOf("#d=") !== 0) return;
+    try {
+      if (!hadSaved) {
+        var b = h.slice(3).replace(/-/g, "+").replace(/_/g, "/");
+        while (b.length % 4) b += "=";
+        var bin = atob(b), bytes = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        var o = JSON.parse(new TextDecoder().decode(bytes));
+        if (o && o.debts && o.pagamentos) { store = { debts: o.debts, pagamentos: o.pagamentos }; try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} }
+      }
+      history.replaceState(null, "", location.pathname);
+    } catch (e) {}
+  })();
+  var listeners = { debts: [], pagamentos: [] };
+  function persist() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} }
+  function snap(col) { return Object.keys(store[col]).map(function (id) { var o = store[col][id]; return { id: id, data: function () { return o; } }; }); }
+  function notify(col) { listeners[col].forEach(function (cb) { cb(snap(col)); }); }
+  var localDb = {
+    doc: function (path) {
+      var p = path.split("/"), col = p[0], id = p[1];
+      return {
+        set: function (data) { store[col][id] = data; persist(); notify(col); return Promise.resolve(); },
+        update: function (data) { var o = store[col][id] || {}; for (var k in data) o[k] = data[k]; store[col][id] = o; persist(); notify(col); return Promise.resolve(); }
+      };
+    },
+    collection: function (col) {
+      return { onSnapshot: function (cb) { listeners[col].push(cb); cb(snap(col)); } };
+    }
+  };
+  function exportJson() { return JSON.stringify(store, null, 1); }
+  function importJson(txt) {
+    var o = JSON.parse(txt);
+    if (!o || typeof o.debts !== "object" || typeof o.pagamentos !== "object") throw new Error("formato");
+    store = { debts: o.debts, pagamentos: o.pagamentos }; persist(); notify("debts"); notify("pagamentos");
+  }
+
+  var state = { debts: null, pays: null };
+  var db = null;
+  var openForm = {};
+  var openEdit = {};
+  var novoAberto = false;
+  function num(v) { v = String(v).trim(); if (v.indexOf(',') >= 0) v = v.replace(/\./g, '').replace(',', '.'); return parseFloat(v); }
+  function slug(t) { return t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
+  function renderNovo() {
+    var el = document.getElementById('novo');
+    if (!novoAberto) { el.innerHTML = '<div class="actions"><button type="button" class="ghost" data-novo="1">+ Nova dívida</button></div>'; return; }
+    el.innerHTML = '<form class="pay wide novo"><label>Pessoa<input class="txt" name="pessoa" required></label><label>Descrição<input class="txt" name="descricao" placeholder="Ex.: Celular" required></label><label>Nº de parcelas<input name="n" inputmode="numeric" required></label><label>Valor da parcela (R$)<input name="valor" inputmode="decimal" required></label><label>Total (R$), se diferente<input name="total" inputmode="decimal" placeholder="parcelas × valor"></label><button type="submit">Adicionar</button><button type="button" class="ghost" data-novo-cancel="1">Cancelar</button></form>';
+  }
+
+  function rows(snap) {
+    var out = [];
+    var docs = (snap && snap.docs) ? snap.docs : snap;
+    if (docs && docs.forEach) docs.forEach(function (d) {
+      var data = (typeof d.data === "function") ? d.data() : (d.data || d);
+      var o = {}; for (var k in data) o[k] = data[k];
+      o.id = d.id || o.id;
+      out.push(o);
+    });
+    return out;
+  }
+  function fmtData(p) {
+    if (p.data) return p.data.split("-").reverse().join("/");
+    var m = (p.mesRef || "").split("-");
+    return m.length === 2 ? MESES[+m[1] - 1] + "/" + m[0] : "-";
+  }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
+
+  function render() {
+    var el = document.getElementById("cards");
+    if (!state.debts || !state.pays) return;
+    var debts = state.debts.slice().sort(function (a, b) { return (a.ordem || 99) - (b.ordem || 99); });
+    var totalGeral = 0, recebidoGeral = 0;
+    var items = debts.map(function (d) {
+      var ps = state.pays.filter(function (p) { return p.debtId === d.id; }).sort(function (a, b) { return a.parcela - b.parcela; });
+      var pago = ps.reduce(function (s, p) { return s + (p.valor || 0); }, 0);
+      var saldo = Math.max(0, Math.round((d.total - pago) * 100) / 100);
+      totalGeral += d.total; recebidoGeral += Math.min(pago, d.total);
+      var pagoMes = ps.some(function (p) { return p.mesRef === mesAtual; });
+      return { d: d, ps: ps, pago: pago, saldo: saldo, quitado: saldo === 0, pagoMes: pagoMes };
+    });
+    var aReceber = Math.round((totalGeral - recebidoGeral) * 100) / 100;
+    var pendMes = items.filter(function (i) { return !i.quitado && !i.pagoMes; }).length;
+
+    document.getElementById("summary").innerHTML =
+      '<div class="tile main"><div class="label">Ainda a receber</div><div class="value num">' + brl.format(aReceber) + '</div></div>' +
+      '<div class="tile"><div class="label">Já recebido</div><div class="value num">' + brl.format(recebidoGeral) + '</div></div>' +
+      '<div class="tile"><div class="label">Sem pagamento em ' + MESES[now.getMonth()] + '</div><div class="value num">' + pendMes + ' de ' + items.filter(function (i) { return !i.quitado; }).length + '</div></div>';
+
+    items.sort(function (a, b) {
+      var ra = a.quitado ? 2 : (a.pagoMes ? 1 : 0), rb = b.quitado ? 2 : (b.pagoMes ? 1 : 0);
+      return ra - rb || (a.d.ordem || 99) - (b.d.ordem || 99);
+    });
+
+    el.innerHTML = items.map(function (i) {
+      var d = i.d, pct = Math.min(100, d.total ? (i.pago / d.total) * 100 : 0);
+      var chip = i.quitado ? '<span class="chip done">Quitado</span>'
+        : i.pagoMes ? '<span class="chip ok">Pagou em ' + MESES[now.getMonth()] + '</span>'
+        : '<span class="chip pend">Sem pagamento em ' + MESES[now.getMonth()] + '</span>';
+      var nParc = d.parcelasPrevistas ? (i.ps.length + ' de ' + d.parcelasPrevistas + ' parcelas') : (i.ps.length + ' pagamento(s)');
+      var table = i.ps.length ? '<div class="table-wrap"><table><thead><tr><th>Parcela</th><th>Data</th><th class="r">Valor</th></tr></thead><tbody>' +
+        i.ps.map(function (p) {
+          return '<tr><td class="num">' + p.parcela + '</td><td class="num">' + fmtData(p) + (p.data ? '' : ' <span class="est">(data não informada)</span>') + '</td><td class="r num">' + brl.format(p.valor) + '</td></tr>';
+        }).join("") + '</tbody></table></div>' : '<p class="desc">Nenhum pagamento registrado.</p>';
+      var ultima = i.ps.length ? i.ps[i.ps.length - 1] : null;
+      var form = openForm[d.id] ?
+        '<form class="pay" data-debt="' + esc(d.id) + '"><label>Valor (R$)<input name="valor" inputmode="decimal" value="' + (d.parcelaValor ? String(d.parcelaValor).replace(".", ",") : "") + '" required></label>' +
+        '<label>Data<input name="data" type="date" value="' + hojeISO + '" required></label>' +
+        '<button type="submit">Salvar</button><button type="button" class="ghost" data-cancel="' + esc(d.id) + '">Cancelar</button></form>' : '';
+      var acoes = (!openForm[d.id] && !openEdit[d.id]) ? '<div class="actions">' + (!i.quitado ? '<button type="button" data-open="' + esc(d.id) + '">Registrar pagamento</button>' : '') + '<button type="button" class="ghost" data-edit="' + esc(d.id) + '">Editar parcelas</button></div>' : '';
+      var fmtIn = function (v) { return v == null ? '' : String(v).replace('.', ','); };
+      var edit = openEdit[d.id] ? '<form class="pay wide edit" data-debt="' + esc(d.id) + '"><label>Total (R$)<input name="total" inputmode="decimal" value="' + fmtIn(d.total) + '" required></label><label>Nº de parcelas<input name="n" inputmode="numeric" value="' + fmtIn(d.parcelasPrevistas) + '" required></label><label>Valor da parcela (R$)<input name="valor" inputmode="decimal" value="' + fmtIn(d.parcelaValor) + '" required></label><button type="submit">Salvar</button><button type="button" class="ghost" data-edit-cancel="' + esc(d.id) + '">Cancelar</button></form>' : '';
+      return '<article class="card"><div class="card-head"><div><h2>' + esc(d.pessoa) + '</h2><div class="desc">' + esc(d.descricao) + ' &middot; total ' + brl.format(d.total) + '</div></div>' + chip + '</div>' +
+        '<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(pct) + '"><div style="width:' + pct.toFixed(1) + '%"></div></div>' +
+        '<div class="figures"><div class="col"><span>Pago</span><b class="num">' + brl.format(i.pago) + '</b><span class="desc">' + nParc + '</span></div>' +
+        '<div class="col right"><span>Falta</span><b class="num">' + brl.format(i.saldo) + '</b>' + (ultima ? '<span class="desc">último: ' + fmtData(ultima) + '</span>' : '') + '</div></div>' +
+        '<details><summary>Ver pagamentos</summary>' + table + '</details>' + acoes + form + edit + '</article>';
+    }).join("");
+  }
+
+  document.addEventListener("click", function (e) {
+    var t = e.target;
+    if (t.getAttribute && t.getAttribute("data-open")) { openForm[t.getAttribute("data-open")] = true; render(); }
+    if (t.getAttribute && t.getAttribute("data-cancel")) { delete openForm[t.getAttribute("data-cancel")]; render(); }
+    if (t.getAttribute && t.getAttribute("data-edit")) { openEdit[t.getAttribute("data-edit")] = true; render(); }
+    if (t.getAttribute && t.getAttribute("data-edit-cancel")) { delete openEdit[t.getAttribute("data-edit-cancel")]; render(); }
+    if (t.getAttribute && t.getAttribute("data-novo")) { novoAberto = true; renderNovo(); }
+    if (t.getAttribute && t.getAttribute("data-novo-cancel")) { novoAberto = false; renderNovo(); }
+  });
+  document.addEventListener("submit", function (e) {
+    var f = e.target; if (!f.classList.contains("pay")) return;
+    e.preventDefault();
+    if (f.classList.contains("novo")) {
+      var n0 = parseInt(f.n.value, 10), v0 = num(f.valor.value);
+      var t0 = f.total.value.trim() ? num(f.total.value) : Math.round(n0 * v0 * 100) / 100;
+      var pessoa = f.pessoa.value.trim(), descricao = f.descricao.value.trim();
+      var id0 = slug(pessoa + " " + descricao);
+      if (!db || !id0 || !(n0 > 0) || !(v0 > 0) || !(t0 > 0)) return;
+      var ordem = (state.debts || []).reduce(function (m, x) { return Math.max(m, x.ordem || 0); }, 0) + 1;
+      var b0 = f.querySelector('button[type="submit"]'); b0.disabled = true;
+      db.doc("debts/" + id0).set({ pessoa: pessoa, descricao: descricao, total: t0, parcelaValor: v0, parcelasPrevistas: n0, ordem: ordem })
+        .then(function () { novoAberto = false; renderNovo(); })
+        .catch(function () { b0.disabled = false; b0.textContent = "Erro. Tentar de novo"; });
+      return;
+    }
+    if (f.classList.contains("edit")) {
+      var did = f.getAttribute("data-debt"), nn = parseInt(f.n.value, 10), vv = num(f.valor.value), tt = num(f.total.value);
+      if (!db || !(nn > 0) || !(vv > 0) || !(tt > 0)) return;
+      var b1 = f.querySelector('button[type="submit"]'); b1.disabled = true;
+      db.doc("debts/" + did).update({ total: tt, parcelaValor: vv, parcelasPrevistas: nn })
+        .then(function () { delete openEdit[did]; })
+        .catch(function () { b1.disabled = false; b1.textContent = "Erro. Tentar de novo"; });
+      return;
+    }
+    var debtId = f.getAttribute("data-debt");
+    var valor = num(f.valor.value);
+    var data = f.data.value;
+    if (!db || !(valor > 0) || !data) return;
+    var ps = state.pays.filter(function (p) { return p.debtId === debtId; });
+    var n = ps.reduce(function (m, p) { return Math.max(m, p.parcela || 0); }, 0) + 1;
+    var btn = f.querySelector('button[type="submit"]'); btn.disabled = true;
+    var id = debtId + "-p" + String(n).padStart(2, "0");
+    db.doc("pagamentos/" + id).set({ debtId: debtId, parcela: n, valor: valor, data: data, mesRef: data.slice(0, 7) })
+      .then(function () { delete openForm[debtId]; })
+      .catch(function () { btn.disabled = false; btn.textContent = "Erro. Tentar de novo"; });
+  });
+
+  renderNovo();
+  function start(d) {
+    db = d;
+    var timer = setTimeout(function () {
+      if (!state.debts || !state.pays) document.getElementById("cards").innerHTML = '<p class="msg">Não foi possível carregar os dados. Abra a página de novo.</p>';
+    }, 10000);
+    function got(key) {
+      return function (snap) {
+        clearTimeout(timer);
+        state[key] = rows(snap);
+        if (key === "debts" && state.debts.length === 0 && state.pays && state.pays.length === 0) {
+          document.getElementById("cards").innerHTML = '<p class="msg">Ainda não há dívidas cadastradas.</p>'; return;
+        }
+        render();
+      };
+    }
+    db.collection("debts").onSnapshot(got("debts"));
+    db.collection("pagamentos").onSnapshot(got("pays"));
+  }
+
+  start(localDb);
+  if ("serviceWorker" in navigator && /^https?:/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(function () {});
+
+  var bk = document.getElementById("bk"), bkMsg = document.getElementById("bkmsg");
+  function say(t) { bkMsg.textContent = t; }
+  document.getElementById("bk-down").addEventListener("click", function () {
+    try {
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([exportJson()], { type: "application/json" }));
+      a.download = "quem-me-deve-backup-" + hojeISO + ".json";
+      document.body.appendChild(a); a.click(); a.remove();
+      say("Backup gerado. Procure em Downloads.");
+    } catch (e) { say("Não deu para baixar. Use Copiar backup."); }
+  });
+  document.getElementById("bk-copy").addEventListener("click", function () {
+    var t = exportJson();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(function () { say("Backup copiado. Cole em uma nota ou e-mail."); }, function () { say("Não consegui copiar."); });
+    } else { say("Não consegui copiar."); }
+  });
+  document.getElementById("bk-file").addEventListener("change", function (e) {
+    var f = e.target.files && e.target.files[0]; if (!f) return;
+    f.text().then(function (t) { importJson(t); say("Backup restaurado."); }).catch(function () { say("Arquivo inválido."); });
+    e.target.value = "";
+  });
+})();
+</script>
+</body>
+</html>
