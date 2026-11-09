@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quem Me Deve</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:640px;margin:0 auto;padding:16px;background:#f5f6f8;color:#1a1a1a}
+h1{font-size:22px}.tot{font-size:15px;color:#555;margin-bottom:12px}
+.c{background:#fff;border-radius:10px;padding:12px 14px;margin:10px 0;box-shadow:0 1px 3px #0002}
+.c b{font-size:17px}.f{font-size:20px;font-weight:700;color:#b3261e}.s{color:#666;font-size:13px}
+button{padding:6px 10px;border:0;border-radius:6px;background:#1a56db;color:#fff;cursor:pointer;margin:4px 4px 0 0}
+button.g{background:#777}input{padding:6px;border:1px solid #ccc;border-radius:6px;margin:2px}
+.p{font-size:13px;color:#2a7;margin-top:4px}
+</style></head><body>
+<h1>Quem Me Deve</h1><div class="tot" id="tot"></div><div id="l"></div>
+<div class="c"><b>Novo devedor</b><br>
+<input id="n" placeholder="Nome"><input id="i" placeholder="Item"><input id="v" placeholder="Falta (R$)" size="10">
+<button onclick="add()">Adicionar</button></div>
+<div class="c"><button class="g" onclick="lnk()">Gerar link com dados</button>
+<div class="s" id="lk" style="word-break:break-all"></div></div>
+<script>
+const K='quem-me-deve';let D=[];
+const brl=v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const hoje=()=>new Date().toLocaleDateString('pt-BR');
+const sv=()=>localStorage.setItem(K,JSON.stringify(D));
+(function(){
+ const m=location.hash.match(/^#d=(.+)$/);
+ if(m){try{const j=JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/')))));
+  if(!localStorage.getItem(K)||confirm('Substituir os dados deste aparelho pelos do link?')){D=j;sv();}}catch(e){alert('Link inválido')}
+  history.replaceState(null,'',location.pathname);}
+ else{try{D=JSON.parse(localStorage.getItem(K)||'[]')}catch(e){D=[]}}
+})();
+function r(){
+ document.getElementById('tot').textContent='Total a receber: '+brl(D.reduce((a,x)=>a+x.falta,0));
+ document.getElementById('l').innerHTML=D.map((x,k)=>`<div class="c"><b>${esc(x.nome)}</b> <span class="s">· ${esc(x.item)}</span>
+ <div class="f">${brl(x.falta)}</div>
+ ${x.pag.map(p=>`<div class="p">✓ ${p.data}${p.valor?' · '+brl(p.valor):''}</div>`).join('')}
+ <button onclick="pay(${k})">Registrar pagamento</button><button class="g" onclick="del(${k})">Excluir</button></div>`).join('')||'<div class="s">Nenhum devedor.</div>';
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num=s=>parseFloat(String(s).replace(/\./g,'').replace(',','.'));
+function pay(k){const s=prompt('Valor pago (R$), vazio = só marcar a parcela:');if(s===null)return;
+ const v=s.trim()?num(s):0;if(s.trim()&&isNaN(v))return alert('Valor inválido');
+ D[k].pag.push({data:hoje(),valor:v||null});D[k].falta=Math.max(0,+(D[k].falta-v).toFixed(2));sv();r();}
+function del(k){if(confirm('Excluir '+D[k].nome+'?')){D.splice(k,1);sv();r();}}
+function add(){const n=document.getElementById('n').value.trim(),i=document.getElementById('i').value.trim(),v=num(document.getElementById('v').value);
+ if(!n||isNaN(v))return alert('Preencha nome e valor');D.push({nome:n,item:i,falta:v,pag:[]});sv();r();
+ ['n','i','v'].forEach(x=>document.getElementById(x).value='');}
+function lnk(){const b=btoa(unescape(encodeURIComponent(JSON.stringify(D)))).replace(/\+/g,'-').replace(/\//g,'_');
+ document.getElementById('lk').textContent=location.origin+location.pathname+'#d='+b;}
+r();
+</script></body></html>
