@@ -133,7 +133,8 @@ form.pay.wide input.txt { width: 180px; }
   try { store = JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) { store = null; }
   var hadSaved = false;
   try { hadSaved = localStorage.getItem(KEY) !== null; } catch (e) {}
-  if (!store || !store.debts || !store.pagamentos) store = JSON.parse(JSON.stringify(SEED));
+  if (!store || !store.debts || !store.pagamentos) { store = JSON.parse(JSON.stringify(SEED)); hadSaved = false; }
+  if (!Object.keys(store.debts).length) hadSaved = false;
   (function () {
     var h = location.hash || "";
     if (h.indexOf("#d=") !== 0) return;
