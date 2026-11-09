@@ -137,9 +137,10 @@ form.pay.wide input.txt { width: 180px; }
   if (!Object.keys(store.debts).length) hadSaved = false;
   (function () {
     var h = location.hash || "";
-    if (h.indexOf("#d=") !== 0) return;
+    var force = h.indexOf("#r=") === 0;
+    if (h.indexOf("#d=") !== 0 && !force) return;
     try {
-      if (!hadSaved) {
+      if (!hadSaved || (force && confirm("Substituir os dados deste aparelho pelos do link?"))) {
         var b = h.slice(3).replace(/-/g, "+").replace(/_/g, "/");
         while (b.length % 4) b += "=";
         var bin = atob(b), bytes = new Uint8Array(bin.length);
